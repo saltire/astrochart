@@ -1,16 +1,26 @@
 import * as d3 from 'd3';
 
+import planets from './planets';
 import symbols from './symbols';
 
 
-export default function draw(el) {
+export default function draw(el, data) {
   const svg = d3.select(el);
 
   const c = { x: 200, y: 200, r: 200 };
-  const r = 180;
+  const symbolRadius = 180;
+  const planetRadius = 120;
+  const sw = 60;
+  const sh = 30;
+  const pw = 30;
+  const ph = 30;
+
+  function fDeg({ deg, min, sec }) {
+    return Math.sign(deg) * (Math.abs(deg) + (min / 60) + (sec / 3600));
+  }
 
   function rad(deg) {
-    return (deg * Math.PI) / 180;
+    return ((deg - 90) * Math.PI) / 180;
   }
 
   function preloadImage(src) {
@@ -29,15 +39,29 @@ export default function draw(el) {
 
   Promise
     .all(Object.keys(symbols).map(sym => preloadImage(symbols[sym])))
-    .then(srcs => svg.selectAll('image')
+    .then(srcs => svg.selectAll('image.symbol')
       .data(srcs)
       .enter()
       .append('image')
       .attr('xlink:href', src => src)
-      .attr('width', 60)
-      .attr('height', 30)
-      .attr('x', (src, i) => ((c.x - 30) + (r * Math.cos(rad(i * 30)))))
-      .attr('y', (src, i) => ((c.y - 15) + (r * Math.sin(rad(i * 30))))));
+      .attr('width', sw)
+      .attr('height', sh)
+      .attr('x', (src, i) => ((c.x - (sw / 2)) + (symbolRadius * Math.cos(rad(i * 30)))))
+      .attr('y', (src, i) => ((c.y - (sh / 2)) + (symbolRadius * Math.sin(rad(i * 30))))));
+
+  const planetNames = Object.keys(planets).filter(p => data[p]);
+
+  Promise
+    .all(planetNames.map(p => preloadImage(planets[p])))
+    .then(srcs => svg.selectAll('image.planet')
+      .data(srcs)
+      .enter()
+      .append('image')
+      .attr('xlink:href', src => src)
+      .attr('width', pw)
+      .attr('height', ph)
+      .attr('x', (src, i) => ((c.x - (pw / 2)) + (planetRadius * Math.cos(rad(fDeg(data[planetNames[i]].long))))))
+      .attr('y', (src, i) => ((c.y - (ph / 2)) + (planetRadius * Math.sin(rad(fDeg(data[planetNames[i]].long)))))));
 
   // svg.selectAll('text')
   //   .data('♈♉♊♋♌♍♎♏♐♑♒♓'.split(''))

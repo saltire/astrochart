@@ -10,19 +10,13 @@ class App extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      data: null,
-    };
-
     this.svg = React.createRef();
   }
 
   componentDidMount() {
     axios.get('/planets')
-      .then((resp) => {
-        this.setState({ data: resp.data });
-      });
-    draw(this.svg.current);
+      .then(resp => draw(this.svg.current, resp.data))
+      .catch(console.error);
   }
 
   render() {
