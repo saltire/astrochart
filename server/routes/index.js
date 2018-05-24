@@ -3,6 +3,7 @@
 const cheerio = require('cheerio');
 const express = require('express');
 const request = require('request-promise-native');
+const { DateTime } = require('luxon');
 
 const app = require('./app');
 
@@ -17,11 +18,10 @@ const degRegex = /^(-?\d+)°\s?(\d+)'\s?([\d.]+)$/;
 function parseDegrees(str) {
   const m = str.match(degRegex);
   if (m) {
-    return {
-      deg: parseInt(m[1]),
-      min: parseInt(m[2]),
-      sec: parseFloat(m[3]),
-    };
+    const deg = parseInt(m[1]);
+    const min = parseInt(m[2]);
+    const sec = parseFloat(m[3]);
+    return Math.sign(deg) * (Math.abs(deg) + (min / 60) + (sec / 3600));
   }
   return null;
 }
@@ -37,13 +37,13 @@ router.get('/planets', (req, res, next) => {
     {
       url: 'http://www.astro.com/cgi/swetest.cgi',
       qs: {
-        b: '24.5.2018', // begin date d.m.yyyy
+        b: DateTime.utc().toFormat('d.M.yyyy'), // begin date d.m.yyyy
         n: 1, // number of consecutive days
         s: 1, // timestep in days
         p: 'p', // planets/asteroids 0123456789mtABCcg DEFGHI
         e: '-eswe', // swiss ephemeris
         f: 'PBLSR', // format sequences
-        arg: '', // command line flags
+        arg: '-utc01.01:01', // command line flags
       },
     })
     .then((html) => {

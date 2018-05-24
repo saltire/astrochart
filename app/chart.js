@@ -1,6 +1,5 @@
 import * as d3 from 'd3';
 
-import planets from './planets';
 import symbols from './symbols';
 
 
@@ -8,19 +7,11 @@ export default function draw(el, data) {
   const svg = d3.select(el);
 
   const c = { x: 200, y: 200, r: 200 };
-  const symbolRadius = 180;
-  const planetRadius = 120;
-  const sw = 60;
-  const sh = 30;
-  const pw = 30;
-  const ph = 30;
-
-  function fDeg({ deg, min, sec }) {
-    return Math.sign(deg) * (Math.abs(deg) + (min / 60) + (sec / 3600));
-  }
+  const h = { w: 25, h: 25, r: 180 };
+  const p = { w: 20, h: 20, r: 140 };
 
   function rad(deg) {
-    return ((deg - 90) * Math.PI) / 180;
+    return -((deg - 165) * Math.PI) / 180;
   }
 
   function preloadImage(src) {
@@ -37,31 +28,35 @@ export default function draw(el, data) {
     .attr('cy', c.y)
     .attr('r', c.r);
 
+  const houses = [
+    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+
   Promise
-    .all(Object.keys(symbols).map(sym => preloadImage(symbols[sym])))
-    .then(srcs => svg.selectAll('image.symbol')
+    .all(houses.map(hs => preloadImage(symbols[hs])))
+    .then(srcs => svg.selectAll('image.house')
       .data(srcs)
       .enter()
       .append('image')
       .attr('xlink:href', src => src)
-      .attr('width', sw)
-      .attr('height', sh)
-      .attr('x', (src, i) => ((c.x - (sw / 2)) + (symbolRadius * Math.cos(rad(i * 30)))))
-      .attr('y', (src, i) => ((c.y - (sh / 2)) + (symbolRadius * Math.sin(rad(i * 30))))));
+      .attr('width', h.w)
+      .attr('height', h.h)
+      .attr('x', (src, i) => ((c.x - (h.w / 2)) + (h.r * Math.cos(rad(i * 30)))))
+      .attr('y', (src, i) => ((c.y - (h.h / 2)) + (h.r * Math.sin(rad(i * 30))))));
 
-  const planetNames = Object.keys(planets).filter(p => data[p]);
+  const planetNames = Object.keys(data).filter(pl => symbols[pl]);
 
   Promise
-    .all(planetNames.map(p => preloadImage(planets[p])))
+    .all(planetNames.map(pl => preloadImage(symbols[pl])))
     .then(srcs => svg.selectAll('image.planet')
       .data(srcs)
       .enter()
       .append('image')
       .attr('xlink:href', src => src)
-      .attr('width', pw)
-      .attr('height', ph)
-      .attr('x', (src, i) => ((c.x - (pw / 2)) + (planetRadius * Math.cos(rad(fDeg(data[planetNames[i]].long))))))
-      .attr('y', (src, i) => ((c.y - (ph / 2)) + (planetRadius * Math.sin(rad(fDeg(data[planetNames[i]].long)))))));
+      .attr('width', p.w)
+      .attr('height', p.h)
+      .attr('x', (src, i) => ((c.x - (p.w / 2)) + (p.r * Math.cos(rad(data[planetNames[i]].long)))))
+      .attr('y', (src, i) => ((c.y - (p.h / 2)) + (p.r * Math.sin(rad(data[planetNames[i]].long))))));
 
   // svg.selectAll('text')
   //   .data('♈♉♊♋♌♍♎♏♐♑♒♓'.split(''))
