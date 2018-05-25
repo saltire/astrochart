@@ -11,6 +11,12 @@
   }
 
   > main {
+    margin: 0 1rem;
     text-align: center;
+
+    svg {
+      width: 100%;
+      max-width: 800px;
+    }
   }
 }

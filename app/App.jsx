@@ -26,7 +26,7 @@ class App extends Component {
           <h1>Astro Chart</h1>
         </header>
         <main>
-          <svg width='400' height='400' ref={this.svg} />
+          <svg viewBox='0 0 400 400' ref={this.svg} />
         </main>
       </div>
     );
