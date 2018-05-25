@@ -21,7 +21,12 @@ function parseDegrees(str) {
     const deg = parseInt(m[1]);
     const min = parseInt(m[2]);
     const sec = parseFloat(m[3]);
-    return Math.sign(deg) * (Math.abs(deg) + (min / 60) + (sec / 3600));
+    return {
+      deg,
+      min,
+      sec,
+      dec: Math.sign(deg) * (Math.abs(deg) + (min / 60) + (sec / 3600)),
+    };
   }
   return null;
 }
@@ -33,17 +38,24 @@ router.get('/planets', (req, res, next) => {
   // S - speed in longitude in degrees ddd:mm:ss per day
   // R - distance decimal in AU
 
+  const date = DateTime.utc();
+
   request.get(
     {
       url: 'http://www.astro.com/cgi/swetest.cgi',
       qs: {
-        b: DateTime.utc().toFormat('d.M.yyyy'), // begin date d.m.yyyy
+        b: date.toFormat('d.M.yyyy'), // begin date d.m.yyyy
         n: 1, // number of consecutive days
         s: 1, // timestep in days
-        p: 'p', // planets/asteroids 0123456789mtABCcg DEFGHI
+        // p: 'p', // planets/asteroids 0123456789mtABCcg DEFGHI
+        p: '0123456789D',
         e: '-eswe', // swiss ephemeris
         f: 'PBLSR', // format sequences
-        arg: '-utc01.01:01', // command line flags
+        arg: [
+          `-utc${date.toFormat('hh.mm:ss')}`,
+          '-topo-79.4,43.7,76', // Toronto
+          // '-topo0.12,51.5,35', // London
+        ].join(' '), // command line flags
       },
     })
     .then((html) => {
