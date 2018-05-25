@@ -23,6 +23,9 @@ export default function draw(el, data) {
   const p = { w: 20, h: 20, r: 140 };
   const ar = 120;
 
+  const hlr = h.r - (c.r - h.r);
+  const plr = p.r - (hlr - p.r);
+
   // function preloadImage(src) {
   //   return new Promise((resolve) => {
   //     const img = new Image();
@@ -32,10 +35,36 @@ export default function draw(el, data) {
   // }
 
   svg.append('circle')
-    .style('fill', '#ccc')
+    .attr('fill', '#ddd')
+    .attr('stroke', 'black')
     .attr('cx', c.x)
     .attr('cy', c.y)
-    .attr('r', c.r);
+    .attr('r', c.r - 0.5);
+
+  svg.append('circle')
+    .attr('fill', '#eee')
+    .attr('stroke', 'black')
+    .attr('cx', c.x)
+    .attr('cy', c.y)
+    .attr('r', hlr);
+
+  svg.append('circle')
+    .attr('fill', '#fff')
+    // .attr('stroke', '#ccc')
+    .attr('cx', c.x)
+    .attr('cy', c.y)
+    .attr('r', plr);
+
+  for (let i = 0; i < 360; i += 5) {
+    const rads = rad(i);
+    const len = (i % 30) ? 3 : (c.r - hlr) - 1;
+    svg.append('line')
+      .attr('stroke', '#666')
+      .attr('x1', c.x + ((hlr + 0.5) * Math.cos(rads)))
+      .attr('y1', c.y + ((hlr + 0.5) * Math.sin(rads)))
+      .attr('x2', c.x + ((hlr + len) * Math.cos(rads)))
+      .attr('y2', c.y + ((hlr + len) * Math.sin(rads)));
+  }
 
   const houses = zodiac.map((hs, i) => ({
     src: symbols[hs],
