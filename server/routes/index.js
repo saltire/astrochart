@@ -13,19 +13,20 @@ const router = module.exports = express.Router();
 const degrees = "(-?\\d+°\\s?\\d+'\\s?[\\d.]+)";
 const lineRegex = new RegExp(['^(\\w+)', degrees, degrees, degrees, '([\\d.]+)'].join('\\s+'));
 
-const degRegex = /^(-?\d+)°\s?(\d+)'\s?([\d.]+)$/;
+const degRegex = /^(-?)(\d+)°\s?(\d+)'\s?([\d.]+)$/;
 
 function parseDegrees(str) {
   const m = str.match(degRegex);
   if (m) {
-    const deg = parseInt(m[1]);
-    const min = parseInt(m[2]);
-    const sec = parseFloat(m[3]);
+    const sign = m[1] ? -1 : 1;
+    const deg = sign * parseInt(m[2]);
+    const min = sign * parseInt(m[3]);
+    const sec = sign * parseFloat(m[4]);
     return {
       deg,
       min,
       sec,
-      dec: Math.sign(deg) * (Math.abs(deg) + (min / 60) + (sec / 3600)),
+      dec: deg + (min / 60) + (sec / 3600),
     };
   }
   return null;
