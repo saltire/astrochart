@@ -6,6 +6,7 @@ import symbols from './symbols';
 const zodiac = [
   'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+const houseClasses = ['red', 'green', 'yellow', 'blue'];
 
 function rad(deg) {
   return -((deg - 180) * Math.PI) / 180;
@@ -18,13 +19,18 @@ function hasAspect(diff, angle, maxOrb) {
 export default function draw(el, data) {
   const svg = d3.select(el);
 
-  const c = { x: 200, y: 200, r: 200 };
-  const h = { w: 25, h: 25, r: 180 };
-  const p = { w: 20, h: 20, r: 140 };
-  const ar = 120;
+  const c = { x: 200, y: 200, r: 200, m: 10 };
+  const h = { w: 25, h: 25, m: 40 };
+  const p = { w: 20, h: 20, m: 40 };
 
-  const hlr = h.r - (c.r - h.r);
-  const plr = p.r - (hlr - p.r);
+  // Circle radii
+  const hcr = c.r - c.m;
+  const pcr = hcr - h.m;
+  const acr = pcr - p.m;
+
+  // Symbol radii
+  const hsr = (hcr + pcr) / 2;
+  const psr = (acr + pcr) / 2;
 
   // function preloadImage(src) {
   //   return new Promise((resolve) => {
@@ -34,40 +40,69 @@ export default function draw(el, data) {
   //   });
   // }
 
+  const defs = svg.append('defs');
+
+  const disc = defs.append('linearGradient')
+    .attr('id', 'disc')
+    .attr('gradientTransform', 'rotate(60)');
+  disc.append('stop')
+    .attr('offset', '0%')
+    .attr('stop-color', '#8462c8');
+  disc.append('stop')
+    .attr('offset', '100%')
+    .attr('stop-color', '#40a669');
+
+  const discOutline = defs.append('linearGradient')
+    .attr('id', 'discOutline')
+    .attr('gradientTransform', 'rotate(60)');
+  discOutline.append('stop')
+    .attr('offset', '0%')
+    .attr('stop-color', '#fb83dc');
+  discOutline.append('stop')
+    .attr('offset', '100%')
+    .attr('stop-color', '#79f97c');
+
   const circles = svg.append('g');
 
   circles.append('circle')
-    .attr('fill', '#ddd')
-    .attr('stroke', 'black')
+    .attr('fill', 'url(#disc)')
+    .attr('stroke', 'url(#discOutline)')
     .attr('cx', c.x)
     .attr('cy', c.y)
     .attr('r', c.r - 0.5);
 
   circles.append('circle')
-    .attr('fill', '#eee')
-    .attr('stroke', 'black')
+    .attr('fill', 'black')
+    .attr('fill-opacity', 0.5)
     .attr('cx', c.x)
     .attr('cy', c.y)
-    .attr('r', hlr);
+    .attr('r', c.r - c.m);
 
   circles.append('circle')
-    .attr('fill', '#fff')
-    // .attr('stroke', '#ccc')
+    .attr('fill', 'black')
+    .attr('fill-opacity', 0.5)
     .attr('cx', c.x)
     .attr('cy', c.y)
-    .attr('r', plr);
+    .attr('r', c.r - c.m - h.m);
+
+  circles.append('circle')
+    .attr('fill', 'black')
+    .attr('cx', c.x)
+    .attr('cy', c.y)
+    .attr('r', c.r - c.m - h.m - p.m);
 
   const lines = svg.append('g');
 
   for (let i = 0; i < 360; i += 5) {
     const rads = rad(i);
-    const len = (i % 30) ? 3 : (c.r - hlr) - 1;
+    const len = (i % 30) ? 3 : (hcr - pcr) - 1;
     lines.append('line')
-      .attr('stroke', '#666')
-      .attr('x1', c.x + ((hlr + 0.5) * Math.cos(rads)))
-      .attr('y1', c.y + ((hlr + 0.5) * Math.sin(rads)))
-      .attr('x2', c.x + ((hlr + len) * Math.cos(rads)))
-      .attr('y2', c.y + ((hlr + len) * Math.sin(rads)));
+      .attr('stroke', 'white')
+      .attr('stroke-opacity', 0.5)
+      .attr('x1', c.x + ((pcr + 0.5) * Math.cos(rads)))
+      .attr('y1', c.y + ((pcr + 0.5) * Math.sin(rads)))
+      .attr('x2', c.x + ((pcr + len) * Math.cos(rads)))
+      .attr('y2', c.y + ((pcr + len) * Math.sin(rads)));
   }
 
   const houses = zodiac.map((hs, i) => ({
@@ -81,11 +116,11 @@ export default function draw(el, data) {
     .enter()
     .append('use')
     .attr('xlink:href', house => `${house.src}#${house.name}`)
-    .attr('fill', 'red')
+    .attr('class', (house, i) => `house ${houseClasses[i % 4]}`)
     .attr('width', h.w)
     .attr('height', h.h)
-    .attr('x', house => ((c.x - (h.w / 2)) + (h.r * Math.cos(house.rad))))
-    .attr('y', house => ((c.y - (h.h / 2)) + (h.r * Math.sin(house.rad))));
+    .attr('x', house => ((c.x - (h.w / 2)) + (hsr * Math.cos(house.rad))))
+    .attr('y', house => ((c.y - (h.h / 2)) + (hsr * Math.sin(house.rad))));
 
   const planets = {};
   Object.keys(data).filter(pl => symbols[pl]).forEach((pl) => {
@@ -102,11 +137,12 @@ export default function draw(el, data) {
     .enter()
     .append('use')
     .attr('xlink:href', planet => `${planet.src}#${planet.name}`)
+    .attr('class', planet => `planet ${planet.speed.dec < 0 ? 'retro' : ''}`)
     .attr('width', p.w)
     .attr('height', p.h)
     .attr('fill', 'blue')
-    .attr('x', planet => ((c.x - (p.w / 2)) + (p.r * Math.cos(planet.rad))))
-    .attr('y', planet => ((c.y - (p.h / 2)) + (p.r * Math.sin(planet.rad))));
+    .attr('x', planet => ((c.x - (p.w / 2)) + (psr * Math.cos(planet.rad))))
+    .attr('y', planet => ((c.y - (p.h / 2)) + (psr * Math.sin(planet.rad))));
 
   const aspects = {
     trine: [],
@@ -137,31 +173,31 @@ export default function draw(el, data) {
     .data(aspects.trine)
     .enter()
     .append('line')
-    .attr('stroke', 'blue')
-    .attr('x1', ([pl1]) => c.x + (ar * Math.cos(planets[pl1].rad)))
-    .attr('y1', ([pl1]) => c.y + (ar * Math.sin(planets[pl1].rad)))
-    .attr('x2', ([, pl2]) => c.x + (ar * Math.cos(planets[pl2].rad)))
-    .attr('y2', ([, pl2]) => c.y + (ar * Math.sin(planets[pl2].rad)));
+    .attr('class', 'aspect trine')
+    .attr('x1', ([pl1]) => c.x + (acr * Math.cos(planets[pl1].rad)))
+    .attr('y1', ([pl1]) => c.y + (acr * Math.sin(planets[pl1].rad)))
+    .attr('x2', ([, pl2]) => c.x + (acr * Math.cos(planets[pl2].rad)))
+    .attr('y2', ([, pl2]) => c.y + (acr * Math.sin(planets[pl2].rad)));
 
   svg.selectAll('line.square')
     .data(aspects.square)
     .enter()
     .append('line')
-    .attr('stroke', 'red')
-    .attr('x1', ([pl1]) => c.x + (ar * Math.cos(planets[pl1].rad)))
-    .attr('y1', ([pl1]) => c.y + (ar * Math.sin(planets[pl1].rad)))
-    .attr('x2', ([, pl2]) => c.x + (ar * Math.cos(planets[pl2].rad)))
-    .attr('y2', ([, pl2]) => c.y + (ar * Math.sin(planets[pl2].rad)));
+    .attr('class', 'aspect square')
+    .attr('x1', ([pl1]) => c.x + (acr * Math.cos(planets[pl1].rad)))
+    .attr('y1', ([pl1]) => c.y + (acr * Math.sin(planets[pl1].rad)))
+    .attr('x2', ([, pl2]) => c.x + (acr * Math.cos(planets[pl2].rad)))
+    .attr('y2', ([, pl2]) => c.y + (acr * Math.sin(planets[pl2].rad)));
 
   svg.selectAll('line.sextile')
     .data(aspects.sextile)
     .enter()
     .append('line')
-    .attr('stroke', 'green')
-    .attr('x1', ([pl1]) => c.x + (ar * Math.cos(planets[pl1].rad)))
-    .attr('y1', ([pl1]) => c.y + (ar * Math.sin(planets[pl1].rad)))
-    .attr('x2', ([, pl2]) => c.x + (ar * Math.cos(planets[pl2].rad)))
-    .attr('y2', ([, pl2]) => c.y + (ar * Math.sin(planets[pl2].rad)));
+    .attr('class', 'aspect sextile')
+    .attr('x1', ([pl1]) => c.x + (acr * Math.cos(planets[pl1].rad)))
+    .attr('y1', ([pl1]) => c.y + (acr * Math.sin(planets[pl1].rad)))
+    .attr('x2', ([, pl2]) => c.x + (acr * Math.cos(planets[pl2].rad)))
+    .attr('y2', ([, pl2]) => c.y + (acr * Math.sin(planets[pl2].rad)));
 
   // svg.selectAll('text')
   //   .data('♈♉♊♋♌♍♎♏♐♑♒♓'.split(''))

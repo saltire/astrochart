@@ -1,8 +1,27 @@
+$background: #24303f;
+
+$disc1: #8462c8;
+$disc2: #40a669;
+$outline1: #fb83dc;
+$outline2: #79f97c;
+
+$red: #ff9aba;
+$green: #5ef49a;
+$yellow: #caea7e;
+$blue: #91c1ff;
+
+$lavender: #e3d3ff;
+$lavender-dark: #a87dff;
+
 .App {
+  height: 100%;
+  background: $background;
+
   > header {
     margin-bottom: 2rem;
     padding: 1em 0;
-    background: #ccc;
+    background: rgba(black, .5);
+    color: $background;
     text-align: center;
 
     h1 {
@@ -17,6 +36,45 @@
     svg {
       width: 100%;
       max-width: 800px;
+
+      .disc {
+        fill: linear-gradient(60deg, $disc1, $disc2);
+      }
+
+      .house {
+        &.red {
+          fill: $red;
+        }
+        &.green {
+          fill: $green;
+        }
+        &.yellow {
+          fill: $yellow;
+        }
+        &.blue {
+          fill: $blue;
+        }
+      }
+
+      .planet {
+        fill: $lavender;
+
+        &.retro {
+          fill: $lavender-dark;
+        }
+      }
+
+      .aspect {
+        &.trine {
+          stroke: $blue;
+        }
+        &.square {
+          stroke: $red;
+        }
+        &.sextile {
+          stroke: $green;
+        }
+      }
     }
   }
 }
