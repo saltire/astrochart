@@ -34,31 +34,35 @@ export default function draw(el, data) {
   //   });
   // }
 
-  svg.append('circle')
+  const circles = svg.append('g');
+
+  circles.append('circle')
     .attr('fill', '#ddd')
     .attr('stroke', 'black')
     .attr('cx', c.x)
     .attr('cy', c.y)
     .attr('r', c.r - 0.5);
 
-  svg.append('circle')
+  circles.append('circle')
     .attr('fill', '#eee')
     .attr('stroke', 'black')
     .attr('cx', c.x)
     .attr('cy', c.y)
     .attr('r', hlr);
 
-  svg.append('circle')
+  circles.append('circle')
     .attr('fill', '#fff')
     // .attr('stroke', '#ccc')
     .attr('cx', c.x)
     .attr('cy', c.y)
     .attr('r', plr);
 
+  const lines = svg.append('g');
+
   for (let i = 0; i < 360; i += 5) {
     const rads = rad(i);
     const len = (i % 30) ? 3 : (c.r - hlr) - 1;
-    svg.append('line')
+    lines.append('line')
       .attr('stroke', '#666')
       .attr('x1', c.x + ((hlr + 0.5) * Math.cos(rads)))
       .attr('y1', c.y + ((hlr + 0.5) * Math.sin(rads)))
@@ -67,6 +71,7 @@ export default function draw(el, data) {
   }
 
   const houses = zodiac.map((hs, i) => ({
+    name: hs,
     src: symbols[hs],
     rad: rad((i * 30) + 15),
   }));
@@ -74,8 +79,9 @@ export default function draw(el, data) {
   svg.selectAll('image.house')
     .data(houses)
     .enter()
-    .append('image')
-    .attr('xlink:href', house => house.src)
+    .append('use')
+    .attr('xlink:href', house => `${house.src}#${house.name}`)
+    .attr('fill', 'red')
     .attr('width', h.w)
     .attr('height', h.h)
     .attr('x', house => ((c.x - (h.w / 2)) + (h.r * Math.cos(house.rad))))
@@ -84,6 +90,7 @@ export default function draw(el, data) {
   const planets = {};
   Object.keys(data).filter(pl => symbols[pl]).forEach((pl) => {
     planets[pl] = Object.assign({}, data[pl], {
+      name: pl,
       src: symbols[pl],
       rad: rad(data[pl].long.dec),
       house: Math.floor(data[pl].long.deg / 30),
@@ -93,10 +100,11 @@ export default function draw(el, data) {
   svg.selectAll('image.planet')
     .data(Object.keys(planets).map(pl => planets[pl]))
     .enter()
-    .append('image')
-    .attr('xlink:href', planet => planet.src)
+    .append('use')
+    .attr('xlink:href', planet => `${planet.src}#${planet.name}`)
     .attr('width', p.w)
     .attr('height', p.h)
+    .attr('fill', 'blue')
     .attr('x', planet => ((c.x - (p.w / 2)) + (p.r * Math.cos(planet.rad))))
     .attr('y', planet => ((c.y - (p.h / 2)) + (p.r * Math.sin(planet.rad))));
 
