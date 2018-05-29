@@ -10,20 +10,19 @@ const util = require('util');
 // and strips out unnecessary title and group elements.
 
 const dir = './app/static/symbols';
-util.promisify(fs.readdir)(dir).then((files) => {
-  files.forEach((file) => {
+util.promisify(fs.readdir)(dir).then(files =>
+  Promise.all(files.map(file =>
     util.promisify(fs.readFile)(`${dir}/${file}`, { encoding: 'utf-8' }).then((data) => {
       const $ = cheerio.load(data);
+      const $path = $('path');
+
       $('title').remove();
-      $('svg > g').replaceWith($('path'));
-      const id = $('path').attr('id');
+      $('svg > g').replaceWith($path);
+      const id = $path.attr('id');
       if (id) {
-        $('svg').attr('id', $('path').attr('id'));
-        $('path').removeAttr('id');
+        $('svg').attr('id', $path.attr('id'));
+        $path.removeAttr('id');
       }
 
-      util.promisify(fs.writeFile)(`${dir}/${file}`, $.html('svg'));
-    });
-  });
-});
-
+      return util.promisify(fs.writeFile)(`${dir}/${file}`, $.html('svg'));
+    }))));
